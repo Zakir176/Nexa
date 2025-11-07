@@ -21,6 +21,6 @@ def volume_up(): pyautogui.press("volumeup", presses=3)
 def volume_down(): pyautogui.press("volumedown", presses=3)
 def screenshot():
     img = pyautogui.screenshot()
-    path = "jarvis_screenshot.png"
+    path = "Nexa_screenshot.png"
     img.save(path)
     return path
