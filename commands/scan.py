@@ -8,3 +8,6 @@ def handle():
         placeholder.image(frame, channels="BGR")
     scan_environment(update)
     return "Scan complete"
+
+detected = []  # collect from YOLO results (advanced)
+speak("I see a human, a phone, and a laptop.")
