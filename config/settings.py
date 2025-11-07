@@ -1,6 +1,7 @@
 # config/settings.py
 import os
 
+
 class Config:
     REPLICATE_TOKEN = os.getenv("REPLICATE_API") or "YOUR_TOKEN_HERE"
     CAMERA_ID = 0
