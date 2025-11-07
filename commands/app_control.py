@@ -1,16 +1,24 @@
 # commands/app_control.py
-from core.system import open_app, close_app
-from core.voice import speak_async
+from core.system import open_app, close_app, volume_up, volume_down
+from core.voice import speak  # or speak_async if you prefer
 
 def handle(command):
     if "open" in command:
-        app = command.split("open")[-1].strip()
+        app = command.replace("open", "").strip()
         open_app(app)
-        speak_async("assets/activate.mp3")
-        return f"Opening {app}"
-    if "close" in command:
-        app = command.split("close")[-1].strip()
+        speak(f"Opening {app}")
+        return f"Opened {app}"
+    elif "close" in command:
+        app = command.replace("close", "").strip()
         close_app(app)
-        speak_async("assets/deactivate.mp3")
+        speak(f"Closing {app}")
         return f"Closed {app}"
+    elif "volume up" in command:
+        volume_up()
+        speak("Volume up")
+        return "Volume increased"
+    elif "volume down" in command:
+        volume_down()
+        speak("Volume down")
+        return "Volume decreased"
     return None
