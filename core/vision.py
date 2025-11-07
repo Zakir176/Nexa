@@ -10,21 +10,28 @@ mp_face = mp.solutions.face_detection
 mp_hands = mp.solutions.hands
 mp_draw = mp.solutions.drawing_utils
 
+
 # YOLOv8-nano: 80-class object detection (runs on CPU!)
 @st.cache_resource
 def load_yolo():
     return YOLO("yolov8n.pt")  # auto-downloads ~6MB model
 
+
 yolo_model = load_yolo()
+
 
 def scan_environment(callback):
     cap = cv2.VideoCapture(Config.CAMERA_ID)
-    with mp_face.FaceDetection(min_detection_confidence=Config.CONFIDENCE) as face_det, \
-         mp_hands.Hands(min_detection_confidence=Config.CONFIDENCE, max_num_hands=2) as hands:
+    with mp_face.FaceDetection(
+        min_detection_confidence=Config.CONFIDENCE
+    ) as face_det, mp_hands.Hands(
+        min_detection_confidence=Config.CONFIDENCE, max_num_hands=2
+    ) as hands:
 
         while cap.isOpened():
             ret, frame = cap.read()
-            if not ret: break
+            if not ret:
+                break
             rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             h, w, _ = frame.shape
 
@@ -34,17 +41,32 @@ def scan_environment(callback):
                 for idx, d in enumerate(faces.detections):
                     mp_draw.draw_detection(frame, d)
                     bbox = d.location_data.relative_bounding_box
-                    x = int(bbox.xmin * w); y = int(bbox.ymin * h)
-                    cv2.putText(frame, f"Human {idx+1}", (x, y-10),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+                    x = int(bbox.xmin * w)
+                    y = int(bbox.ymin * h)
+                    cv2.putText(
+                        frame,
+                        f"Human {idx+1}",
+                        (x, y - 10),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.7,
+                        (0, 255, 0),
+                        2,
+                    )
 
             # === 2. Hand Detection ===
             hand_results = hands.process(rgb)
             if hand_results.multi_hand_landmarks:
                 for hand in hand_results.multi_hand_landmarks:
                     mp_draw.draw_landmarks(frame, hand, mp_hands.HAND_CONNECTIONS)
-                cv2.putText(frame, "Gesture Ready", (50, 50),
-                            cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+                cv2.putText(
+                    frame,
+                    "Gesture Ready",
+                    (50, 50),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    1,
+                    (255, 0, 0),
+                    2,
+                )
 
             # === 3. YOLO Object Detection ===
             results = yolo_model(frame, stream=True)
@@ -57,12 +79,19 @@ def scan_environment(callback):
                     label = f"{yolo_model.names[cls]} {conf:.2f}"
                     color = (0, 255, 255)  # Yellow
                     cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
-                    cv2.putText(frame, label, (x1, y1 - 10),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+                    cv2.putText(
+                        frame,
+                        label,
+                        (x1, y1 - 10),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.6,
+                        color,
+                        2,
+                    )
 
             # === Show frame ===
             callback(frame)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
+            if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
 
     cap.release()
