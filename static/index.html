@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NEXA</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="h-full bg-black overflow-hidden flex items-center justify-center">
+  <div id="scene-container" class="w-full h-full"></div>
+
+  <div id="ui" class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+    <h1 id="nexa-text" class="text-8xl font-black text-white" style="font-family: 'Orbitron'">
+      nexa
+    </h1>
+    <p id="status" class="mt-8 text-cyan-400 text-xl">Tap to activate</p>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
