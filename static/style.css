@@ -1,21 +1,154 @@
-#nexa-text {
-  text-shadow: 0 0 30px rgba(0, 255, 255, 0.8), 0 0 60px rgba(0, 255, 255, 0.5);
-  letter-spacing: 12px;
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-.ring {
-  border: 3px solid #00ffff;
-  border-radius: 50%;
-  box-shadow: 0 0 40px #00ffff, 0 0 80px #00ffff;
+body {
+    background: linear-gradient(to bottom, #000000, #0b0b0b);
+    height: 100vh;
+    overflow: hidden;
+    font-family: 'Segoe UI', 'Arial', sans-serif;
+    color: #ffffff;
 }
 
-body::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: 
-    radial-gradient(ellipse at center, #001122 0%, #000 70%),
-    repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,255,0.03) 2px, rgba(0,255,255,0.03) 4px);
-  pointer-events: none;
-  z-index: -1;
+#scene-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+.interface-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.jarvis-container {
+    text-align: center;
+    position: relative;
+}
+
+.status {
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+    color: rgba(255, 255, 255, 0.8);
+    text-shadow: 0 0 10px rgba(0, 195, 255, 0.5);
+    transition: all 0.3s ease;
+}
+
+.jarvis-button {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.jarvis-text {
+    font-size: 2.5rem;
+    font-weight: 300;
+    letter-spacing: 0.3rem;
+    color: #ffffff;
+    text-shadow: 0 0 15px rgba(0, 195, 255, 0.8);
+    z-index: 3;
+    transition: all 0.3s ease;
+}
+
+.button-ring {
+    position: absolute;
+    width: 180px;
+    height: 180px;
+    border: 2px solid rgba(0, 195, 255, 0.6);
+    border-radius: 50%;
+    box-shadow: 0 0 20px rgba(0, 195, 255, 0.4);
+    transition: all 0.3s ease;
+}
+
+/* Idle State */
+.jarvis-button.idle .jarvis-text {
+    text-shadow: 0 0 10px rgba(0, 195, 255, 0.6);
+}
+
+.jarvis-button.idle .button-ring {
+    border: 2px solid rgba(0, 195, 255, 0.4);
+    box-shadow: 0 0 15px rgba(0, 195, 255, 0.3);
+    animation: idle-pulse 4s infinite ease-in-out;
+}
+
+/* Listening State */
+.jarvis-button.listening .jarvis-text {
+    text-shadow: 0 0 25px rgba(0, 195, 255, 1);
+    animation: text-pulse 1.5s infinite ease-in-out;
+}
+
+.jarvis-button.listening .button-ring {
+    border: 3px solid rgba(0, 195, 255, 0.9);
+    box-shadow: 0 0 30px rgba(0, 195, 255, 0.7);
+    animation: listening-pulse 1s infinite ease-in-out;
+}
+
+/* Animations */
+@keyframes idle-pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 0.6;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 0.8;
+    }
+}
+
+@keyframes listening-pulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 30px rgba(0, 195, 255, 0.7);
+    }
+    50% {
+        transform: scale(1.1);
+        box-shadow: 0 0 50px rgba(0, 195, 255, 0.9);
+    }
+}
+
+@keyframes text-pulse {
+    0%, 100% {
+        text-shadow: 0 0 20px rgba(0, 195, 255, 0.8);
+    }
+    50% {
+        text-shadow: 0 0 30px rgba(0, 195, 255, 1);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .jarvis-button {
+        width: 150px;
+        height: 150px;
+    }
+    
+    .button-ring {
+        width: 140px;
+        height: 140px;
+    }
+    
+    .jarvis-text {
+        font-size: 2rem;
+    }
+    
+    .status {
+        font-size: 1rem;
+    }
 }
