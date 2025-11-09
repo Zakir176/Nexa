@@ -12,10 +12,15 @@
 <body class="h-full bg-black overflow-hidden flex items-center justify-center">
   <div id="scene-container" class="w-full h-full"></div>
 
-  <div id="ui" class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-    <h1 id="nexa-text" class="text-8xl font-black text-white" style="font-family: 'Orbitron'">
-      nexa
-    </h1>
+  <div id="ui" class="absolute inset-0 flex flex-col items-center justify-center">
+    <!-- JARVIS Button -->
+    <div id="nexa-button" class="relative flex items-center justify-center cursor-pointer">
+      <div id="button-ring" class="absolute w-64 h-64 rounded-full border-4 border-cyan-400 opacity-30 blur-lg transition-all duration-700"></div>
+      <h1 id="nexa-text" class="text-8xl font-black text-white select-none" style="font-family: 'Orbitron'">
+        nexa
+      </h1>
+    </div>
+
     <p id="status" class="mt-8 text-cyan-400 text-xl">Tap to activate</p>
   </div>
 
