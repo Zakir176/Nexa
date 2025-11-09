@@ -1,0 +1,21 @@
+#nexa-text {
+  text-shadow: 0 0 30px rgba(0, 255, 255, 0.8), 0 0 60px rgba(0, 255, 255, 0.5);
+  letter-spacing: 12px;
+}
+
+.ring {
+  border: 3px solid #00ffff;
+  border-radius: 50%;
+  box-shadow: 0 0 40px #00ffff, 0 0 80px #00ffff;
+}
+
+body::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: 
+    radial-gradient(ellipse at center, #001122 0%, #000 70%),
+    repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,255,0.03) 2px, rgba(0,255,255,0.03) 4px);
+  pointer-events: none;
+  z-index: -1;
+}
