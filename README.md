@@ -17,7 +17,7 @@ Built with Python and Streamlit, Nexa handles voice commands for app control, en
 - On-Device Focus: No external servers needed (except optional APIs); runs on CPU/GPU.
 ## Prerequisites
 
-- Python 3.8+ (tested on 3.12)
+- Python + (tested on 3.12)
 - Microphone and webcam access (for voice/scanning)
 - Optional: OpenWeatherMap API key for weather (free at openweathermap.org)
 ## Installation
@@ -101,4 +101,4 @@ Nexa/
     - Make changes: Code, test, and commit with clear messages (e.g., "Add gesture swipe command").
     - Push: git push origin feature/amazing-idea.
     - Pull Request: Open a PR to main. Describe what you added/fixed and why.
-    - Test: Ensure it runs on Python 3.8+ and add tests if possible.
+    - Test: Ensure it runs on Python + and add tests if possible.
