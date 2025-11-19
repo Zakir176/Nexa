@@ -1,27 +1,38 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>NEXA</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&display=swap" rel="stylesheet">
 </head>
-<body class="h-full bg-black overflow-hidden flex items-center justify-center">
-  <div id="scene-container" class="w-full h-full"></div>
-
-  <div id="ui" class="absolute inset-0 flex flex-col items-center justify-center">
-    <!-- JARVIS Button -->
-    <div id="nexa-button" class="relative flex items-center justify-center cursor-pointer">
-      <div id="button-ring" class="absolute w-64 h-64 rounded-full border-4 border-cyan-400 opacity-30 blur-lg transition-all duration-700"></div>
-      <h1 id="nexa-text" class="text-8xl font-black text-white select-none" style="font-family: 'Orbitron'">
-        nexa
-      </h1>
+<body>
+  <div class="nexa-container">
+    <div class="status" id="status">System Ready</div>
+    
+    <div class="nexa-button" id="nexa-button">
+      <div class="holographic-rings">
+        <div class="hologram-ring ring-1"></div>
+        <div class="hologram-ring ring-2"></div>
+        <div class="ring-glow glow-1"></div>
+        <div class="ring-glow glow-2"></div>
+      </div>
+      
+      <div class="center-core">
+        <div class="core-glow"></div>
+        <div class="nexa-text" id="nexa-text">NEXA</div>
+      </div>
+      
+      <div class="particles-container">
+        <div class="particle particle-1"></div>
+        <div class="particle particle-2"></div>
+        <div class="particle particle-3"></div>
+        <div class="particle particle-4"></div>
+      </div>
     </div>
-
-    <p id="status" class="mt-8 text-cyan-400 text-xl">Tap to activate</p>
+    
+    <div class="instructions">Click or speak to activate</div>
   </div>
 
   <script src="script.js"></script>
