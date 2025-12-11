@@ -2,7 +2,6 @@
 import cv2
 from core.ai import generate_iron_man_face
 from core.voice import speak_async
-import streamlit as st
 
 
 def handle():
@@ -13,6 +12,12 @@ def handle():
     if ret:
         cv2.imwrite("temp_selfie.jpg", frame)
         result = generate_iron_man_face("temp_selfie.jpg")
-        st.image(result, caption="Suit Up Complete")
+        try:
+            import streamlit as st
+
+            st.image(result, caption="Suit Up Complete")
+        except Exception:
+            # In non-UI mode, save the result to disk so user can inspect it
+            cv2.imwrite("suitup_result.jpg", result)
         return "Iron Man mode activated"
     return "Camera error"
