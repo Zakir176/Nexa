@@ -100,3 +100,5 @@ watchdog==6.0.0
 whispercpp==0.0.17
 pytest
 pytest-cov
+fastapi
+uvicorn[standard]
