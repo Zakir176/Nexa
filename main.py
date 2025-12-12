@@ -29,6 +29,11 @@ async def root():
     with open("static/index.html") as f:
         return HTMLResponse(f.read())
 
+@app.get("/health")
+async def health():
+    """Health check endpoint"""
+    return {"status": "healthy", "service": "Nexa AI Assistant"}
+
 # WebSocket for real-time communication (voice, status updates)
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
@@ -36,7 +41,11 @@ async def websocket_endpoint(websocket: WebSocket):
     try:
         while True:
             data = await websocket.receive_text()
-            if data == "activate":
+            if data == "stop_scan":
+                # Stop current scan operation
+                scan.stop_scan()
+                await websocket.send_json({"status": "Scan stopped"})
+            elif data == "activate":
                 await websocket.send_json({"status": "INITIALIZING..."})
                 await asyncio.sleep(1)
                 await websocket.send_json({"status": "LISTENING..."})
@@ -50,28 +59,38 @@ async def websocket_endpoint(websocket: WebSocket):
                         
                         if cmd:
                             await websocket.send_json({"status": f"HEARD: {cmd}"})
-                            # Send hologram activation if needed
-                            if "hologram" in cmd.lower():
-                                await websocket.send_json({"type": "hologram", "active": True})
-                            # Set websocket and event loop for scan command
-                            if "scan" in cmd.lower():
-                                scan.set_websocket(websocket, loop)
-                            # Run blocking route_command in executor with websocket context
-                            result = await loop.run_in_executor(None, route_command, cmd, websocket)
-                            await asyncio.sleep(1)
-                            await websocket.send_json({"status": f"DONE: {result or 'Complete'}"})
-                            # Deactivate hologram after command completes
-                            if "hologram" in cmd.lower():
-                                await asyncio.sleep(2)
-                                await websocket.send_json({"type": "hologram", "active": False})
+                            try:
+                                # Send hologram activation if needed
+                                if "hologram" in cmd.lower():
+                                    await websocket.send_json({"type": "hologram", "active": True})
+                                # Set websocket and event loop for scan command
+                                if "scan" in cmd.lower():
+                                    scan.set_websocket(websocket, loop)
+                                # Run blocking route_command in executor with websocket context
+                                result = await loop.run_in_executor(None, route_command, cmd, websocket)
+                                await asyncio.sleep(1)
+                                await websocket.send_json({"status": f"DONE: {result or 'Complete'}"})
+                                # Deactivate hologram after command completes
+                                if "hologram" in cmd.lower():
+                                    await asyncio.sleep(2)
+                                    await websocket.send_json({"type": "hologram", "active": False})
+                            except Exception as e:
+                                error_msg = f"Command execution failed: {str(e)}"
+                                print(error_msg)
+                                import traceback
+                                traceback.print_exc()
+                                await websocket.send_json({"status": error_msg, "type": "error"})
                         else:
                             await websocket.send_json({"status": "NO VOICE DETECTED"})
                         
                         await asyncio.sleep(2)
                         await websocket.send_json({"status": "System Ready"})
                     except Exception as e:
+                        error_msg = f"ERROR: {str(e)}"
                         print(f"Error in voice processing: {e}")
-                        await websocket.send_json({"status": f"ERROR: {str(e)}"})
+                        import traceback
+                        traceback.print_exc()
+                        await websocket.send_json({"status": error_msg, "type": "error"})
                 
                 # Start the async task
                 asyncio.create_task(run_voice_async())
