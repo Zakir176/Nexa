@@ -50,10 +50,20 @@ async def websocket_endpoint(websocket: WebSocket):
                         
                         if cmd:
                             await websocket.send_json({"status": f"HEARD: {cmd}"})
-                            # Run blocking route_command in executor
-                            result = await loop.run_in_executor(None, route_command, cmd)
+                            # Send hologram activation if needed
+                            if "hologram" in cmd.lower():
+                                await websocket.send_json({"type": "hologram", "active": True})
+                            # Set websocket and event loop for scan command
+                            if "scan" in cmd.lower():
+                                scan.set_websocket(websocket, loop)
+                            # Run blocking route_command in executor with websocket context
+                            result = await loop.run_in_executor(None, route_command, cmd, websocket)
                             await asyncio.sleep(1)
                             await websocket.send_json({"status": f"DONE: {result or 'Complete'}"})
+                            # Deactivate hologram after command completes
+                            if "hologram" in cmd.lower():
+                                await asyncio.sleep(2)
+                                await websocket.send_json({"type": "hologram", "active": False})
                         else:
                             await websocket.send_json({"status": "NO VOICE DETECTED"})
                         
@@ -68,13 +78,16 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         print("WebSocket disconnected")
 
-def route_command(cmd: str):
+def route_command(cmd: str, websocket=None):
     cmd = cmd.lower()
     if "open" in cmd or "close" in cmd or "volume" in cmd:
         return app_control.handle(cmd)
     if "scan" in cmd:
+        # Websocket is set in the async context above
         return scan.handle()
     if "hologram" in cmd:
+        # Hologram activation message is sent in the async context above
+        # We'll send it from the async function instead
         return hologram.handle()
     return nexamode.handle(cmd)
 

@@ -60,8 +60,25 @@ const NEXA = (function() {
         ws.onmessage = (e) => {
             try {
                 const data = JSON.parse(e.data);
+                
+                // Handle status updates
                 if (data.status && statusEl) {
                     statusEl.textContent = data.status;
+                }
+                
+                // Handle scan frames
+                if (data.type === "scan_frame" && data.frame) {
+                    handleScanFrame(data.frame);
+                }
+                
+                // Handle scan complete
+                if (data.type === "scan_complete") {
+                    handleScanComplete();
+                }
+                
+                // Handle hologram mode
+                if (data.type === "hologram") {
+                    handleHologram(data.active);
                 }
             } catch (err) {
                 console.warn("Invalid WebSocket message:", e.data);
@@ -348,6 +365,117 @@ const NEXA = (function() {
             animationFrame = requestAnimationFrame(update);
         }
         update();
+    }
+
+    // ================================
+    // Scan Frame Handling
+    // ================================
+    let scanContainer = null;
+    let scanImage = null;
+
+    function handleScanFrame(frameBase64) {
+        if (!scanContainer) {
+            // Create scan overlay if it doesn't exist
+            scanContainer = document.createElement('div');
+            scanContainer.id = 'scan-overlay';
+            scanContainer.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.9);
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-direction: column;
+            `;
+            
+            scanImage = document.createElement('img');
+            scanImage.style.cssText = `
+                max-width: 90%;
+                max-height: 90%;
+                border: 2px solid #00ffff;
+                box-shadow: 0 0 30px #00ffff;
+            `;
+            
+            const closeBtn = document.createElement('button');
+            closeBtn.textContent = 'Close Scan';
+            closeBtn.style.cssText = `
+                margin-top: 20px;
+                padding: 10px 20px;
+                background: #00ffff;
+                color: #000;
+                border: none;
+                cursor: pointer;
+                font-size: 16px;
+                font-weight: bold;
+            `;
+            closeBtn.onclick = handleScanComplete;
+            
+            scanContainer.appendChild(scanImage);
+            scanContainer.appendChild(closeBtn);
+            document.body.appendChild(scanContainer);
+        }
+        
+        scanImage.src = `data:image/jpeg;base64,${frameBase64}`;
+    }
+
+    function handleScanComplete() {
+        if (scanContainer) {
+            scanContainer.remove();
+            scanContainer = null;
+            scanImage = null;
+        }
+    }
+
+    // ================================
+    // Hologram Mode Handling
+    // ================================
+    let hologramOverlay = null;
+
+    function handleHologram(active) {
+        if (active) {
+            if (!hologramOverlay) {
+                hologramOverlay = document.createElement('div');
+                hologramOverlay.id = 'hologram-overlay';
+                hologramOverlay.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.95);
+                    z-index: 9999;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: #00ffff;
+                    font-size: 3em;
+                    text-shadow: 0 0 20px #00ffff, 0 0 40px #00ffff;
+                    font-family: 'Orbitron', monospace;
+                    animation: hologramPulse 2s ease-in-out infinite;
+                `;
+                hologramOverlay.textContent = 'NEXA HOLOGRAM ACTIVATED';
+                
+                // Add pulse animation
+                const style = document.createElement('style');
+                style.textContent = `
+                    @keyframes hologramPulse {
+                        0%, 100% { opacity: 1; transform: scale(1); }
+                        50% { opacity: 0.8; transform: scale(1.05); }
+                    }
+                `;
+                document.head.appendChild(style);
+                document.body.appendChild(hologramOverlay);
+            }
+        } else {
+            if (hologramOverlay) {
+                hologramOverlay.remove();
+                hologramOverlay = null;
+            }
+        }
     }
 
     function cleanup() {

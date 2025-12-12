@@ -2,7 +2,7 @@
 # Nexa - On-Device AI Assistant
 
 Nexa is a modular, voice-activated AI assistant inspired by cutting-edge on-device AI like Nexa AI's Octopus models. It runs locally on your device for privacy, speed, and zero cloud dependency think Siri meets JARVIS, but open-source and extensible.
-Built with Python and Streamlit, Nexa handles voice commands for app control, environment scanning (faces, hands, objects), quick utils (weather, jokes, math), and futuristic holograms. Perfect for demos, personal projects, or as a base for your own AI sidekick.
+Built with Python and FastAPI, Nexa handles voice commands for app control, environment scanning (faces, hands, objects), quick utils (weather, jokes, math), and futuristic holograms. Perfect for demos, personal projects, or as a base for your own AI sidekick.
 
 ## Features
 
@@ -57,8 +57,16 @@ WEATHER_API_KEY = "your_free_key_here"
 5. Run the program
 
 ```bash
-python -m streamlit run main.py
+python main.py
 ```
+
+Or with uvicorn directly:
+
+```bash
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+Then open your browser to `http://localhost:8000`
 ## Badges
 
 

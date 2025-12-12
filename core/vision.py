@@ -18,26 +18,16 @@ def _get_yolo_model():
     if _yolo_model is not None:
         return _yolo_model
 
-    # Try to use Streamlit's cache_resource when available, but import
-    # streamlit lazily so importing this module doesn't initialize Streamlit.
-    try:
-        import streamlit as st
-
-        @st.cache_resource
-        def _load():
-            return YOLO("yolov8n.pt")
-
-        _yolo_model = _load()
-    except Exception:
-        _yolo_model = YOLO("yolov8n.pt")
+    # Load YOLO model (no Streamlit dependency needed)
+    _yolo_model = YOLO("yolov8n.pt")
 
     return _yolo_model
 
 
 def scan_environment(callback):
     cap = cv2.VideoCapture(Config.CAMERA_ID)
-    with mp_face.FaceDetection(min_detection_confidence=Config.CONFIDENCE) as face_det, mp_hands.Hands(
-        min_detection_confidence=Config.CONFIDENCE, max_num_hands=2
+    with mp_face.FaceDetection(min_detection_confidence=Config.CONFIDENCE_FACE) as face_det, mp_hands.Hands(
+        min_detection_confidence=Config.CONFIDENCE_HAND, max_num_hands=2
     ) as hands:
 
         while cap.isOpened():
