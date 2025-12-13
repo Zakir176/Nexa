@@ -9,8 +9,16 @@
 </head>
 <body>
   <div class="nexa-container">
+    <!-- Connection Status -->
+    <div class="connection-status" id="connection-status">
+      <span class="status-dot"></span>
+      <span class="status-text">Connecting...</span>
+    </div>
+
+    <!-- Status Display -->
     <div class="status" id="status">System Ready</div>
     
+    <!-- Main Button -->
     <div class="nexa-button" id="nexa-button">
       <div class="holographic-rings">
         <div class="hologram-ring ring-1"></div>
@@ -33,6 +41,46 @@
     </div>
     
     <div class="instructions">Click or speak to activate</div>
+
+    <!-- Command History Panel -->
+    <div class="command-panel" id="command-panel">
+      <div class="panel-header">
+        <span>Recent Commands</span>
+        <button class="panel-toggle" id="panel-toggle">−</button>
+      </div>
+      <div class="command-list" id="command-list"></div>
+    </div>
+
+    <!-- Help Panel -->
+    <div class="help-panel" id="help-panel">
+      <div class="help-header">
+        <span>Available Commands</span>
+        <button class="help-toggle" id="help-toggle">×</button>
+      </div>
+      <div class="help-content">
+        <div class="command-category">
+          <h3>System Control</h3>
+          <div class="command-item">"open [app]" - Open application</div>
+          <div class="command-item">"close [app]" - Close application</div>
+          <div class="command-item">"volume up" - Increase volume</div>
+          <div class="command-item">"volume down" - Decrease volume</div>
+        </div>
+        <div class="command-category">
+          <h3>Environment</h3>
+          <div class="command-item">"scan" - Scan environment</div>
+          <div class="command-item">"hologram" - Activate hologram mode</div>
+        </div>
+        <div class="command-category">
+          <h3>Utilities</h3>
+          <div class="command-item">"weather [city]" - Get weather</div>
+          <div class="command-item">"joke" - Tell a joke</div>
+          <div class="command-item">"calculate [expression]" - Math calculation</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Help Button -->
+    <button class="help-button" id="help-button" title="Show Commands">?</button>
   </div>
 
   <script src="/static/script.js"></script>
