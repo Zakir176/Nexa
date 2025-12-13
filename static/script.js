@@ -12,6 +12,8 @@ const NEXA = (function() {
     let deactivationTimer;
     let animationFrame;
     let voiceLevel = 0;
+    let commandHistory = [];
+    let connectionStatusEl;
 
     // Public methods
     return {
@@ -38,12 +40,17 @@ const NEXA = (function() {
         statusEl = document.getElementById('status');
         nexaButton = document.getElementById('nexa-button');
         nexaText = document.getElementById('nexa-text');
+        connectionStatusEl = document.getElementById('connection-status');
 
         rings = Array.from(document.querySelectorAll('.hologram-ring'));
         glows = Array.from(document.querySelectorAll('.ring-glow'));
         particles = Array.from(document.querySelectorAll('.particle'));
 
         nexaButton.classList.add('idle');
+        
+        // Initialize panels
+        initCommandPanel();
+        initHelpPanel();
     }
 
     // ================================
@@ -55,6 +62,7 @@ const NEXA = (function() {
         ws.onopen = () => {
             console.log("✅ WebSocket connected");
             if (statusEl) statusEl.textContent = "System Ready";
+            updateConnectionStatus(true);
         };
 
         ws.onmessage = (e) => {
@@ -84,10 +92,25 @@ const NEXA = (function() {
                 // Handle errors
                 if (data.type === "error") {
                     if (statusEl) {
-                        statusEl.style.color = "#ff0000";
+                        statusEl.classList.add('error');
                         setTimeout(() => {
-                            if (statusEl) statusEl.style.color = "";
-                        }, 5000);
+                            if (statusEl) statusEl.classList.remove('error');
+                        }, 3000);
+                    }
+                }
+                
+                // Track command history
+                if (data.status && data.status.startsWith("HEARD:")) {
+                    const command = data.status.replace("HEARD:", "").trim();
+                    addToCommandHistory(command);
+                }
+                
+                if (data.status && (data.status.startsWith("DONE:") || data.status.includes("Complete"))) {
+                    if (statusEl) {
+                        statusEl.classList.add('success');
+                        setTimeout(() => {
+                            if (statusEl) statusEl.classList.remove('success');
+                        }, 2000);
                     }
                 }
             } catch (err) {
@@ -98,6 +121,7 @@ const NEXA = (function() {
         ws.onclose = () => {
             console.warn("⚠️ WebSocket disconnected. Reconnecting...");
             if (statusEl) statusEl.textContent = "Reconnecting...";
+            updateConnectionStatus(false);
             setTimeout(connectWebSocket, 2000);
         };
     }
@@ -489,6 +513,144 @@ const NEXA = (function() {
                 hologramOverlay = null;
             }
         }
+    }
+
+    // ================================
+    // Connection Status
+    // ================================
+    function updateConnectionStatus(connected) {
+        if (!connectionStatusEl) return;
+        
+        const statusDot = connectionStatusEl.querySelector('.status-dot');
+        const statusText = connectionStatusEl.querySelector('.status-text');
+        
+        if (connected) {
+            connectionStatusEl.classList.remove('disconnected');
+            connectionStatusEl.classList.add('connected');
+            if (statusText) statusText.textContent = 'Connected';
+        } else {
+            connectionStatusEl.classList.remove('connected');
+            connectionStatusEl.classList.add('disconnected');
+            if (statusText) statusText.textContent = 'Disconnected';
+        }
+    }
+
+    // ================================
+    // Command History Panel
+    // ================================
+    function initCommandPanel() {
+        const panel = document.getElementById('command-panel');
+        const toggle = document.getElementById('panel-toggle');
+        const commandList = document.getElementById('command-list');
+        
+        if (!panel || !toggle) return;
+        
+        // Toggle panel
+        toggle.addEventListener('click', () => {
+            panel.classList.toggle('expanded');
+        });
+        
+        // Click header to toggle
+        const header = panel.querySelector('.panel-header');
+        if (header) {
+            header.addEventListener('click', () => {
+                panel.classList.toggle('expanded');
+            });
+        }
+    }
+    
+    function addToCommandHistory(command) {
+        if (!command || command.trim() === '') return;
+        
+        const timestamp = new Date().toLocaleTimeString();
+        commandHistory.unshift({
+            command: command,
+            timestamp: timestamp,
+            id: Date.now()
+        });
+        
+        // Keep only last 20 commands
+        if (commandHistory.length > 20) {
+            commandHistory = commandHistory.slice(0, 20);
+        }
+        
+        updateCommandHistoryDisplay();
+    }
+    
+    function updateCommandHistoryDisplay() {
+        const commandList = document.getElementById('command-list');
+        if (!commandList) return;
+        
+        commandList.innerHTML = '';
+        
+        if (commandHistory.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'command-item';
+            empty.textContent = '';
+            commandList.appendChild(empty);
+            return;
+        }
+        
+        commandHistory.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'command-item';
+            div.innerHTML = `
+                <div>${escapeHtml(item.command)}</div>
+                <div class="command-time">${item.timestamp}</div>
+            `;
+            div.addEventListener('click', () => {
+                // Could implement command re-execution here
+                console.log('Re-execute:', item.command);
+            });
+            commandList.appendChild(div);
+        });
+    }
+    
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // ================================
+    // Help Panel
+    // ================================
+    function initHelpPanel() {
+        const helpPanel = document.getElementById('help-panel');
+        const helpButton = document.getElementById('help-button');
+        const helpToggle = document.getElementById('help-toggle');
+        
+        if (!helpPanel || !helpButton) return;
+        
+        // Open help panel
+        helpButton.addEventListener('click', () => {
+            helpPanel.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        
+        // Close help panel
+        if (helpToggle) {
+            helpToggle.addEventListener('click', () => {
+                helpPanel.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        }
+        
+        // Close on outside click
+        helpPanel.addEventListener('click', (e) => {
+            if (e.target === helpPanel) {
+                helpPanel.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+        
+        // Close on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && helpPanel.classList.contains('active')) {
+                helpPanel.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
     }
 
     function cleanup() {
