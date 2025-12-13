@@ -80,6 +80,16 @@ const NEXA = (function() {
                 if (data.type === "hologram") {
                     handleHologram(data.active);
                 }
+                
+                // Handle errors
+                if (data.type === "error") {
+                    if (statusEl) {
+                        statusEl.style.color = "#ff0000";
+                        setTimeout(() => {
+                            if (statusEl) statusEl.style.color = "";
+                        }, 5000);
+                    }
+                }
             } catch (err) {
                 console.warn("Invalid WebSocket message:", e.data);
             }
@@ -401,7 +411,7 @@ const NEXA = (function() {
             `;
             
             const closeBtn = document.createElement('button');
-            closeBtn.textContent = 'Close Scan';
+            closeBtn.textContent = 'Stop Scan';
             closeBtn.style.cssText = `
                 margin-top: 20px;
                 padding: 10px 20px;
@@ -412,7 +422,10 @@ const NEXA = (function() {
                 font-size: 16px;
                 font-weight: bold;
             `;
-            closeBtn.onclick = handleScanComplete;
+            closeBtn.onclick = () => {
+                sendToServer("stop_scan");
+                handleScanComplete();
+            };
             
             scanContainer.appendChild(scanImage);
             scanContainer.appendChild(closeBtn);
