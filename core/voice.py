@@ -48,7 +48,14 @@ def _get_model():
     return _model
 
 SAMPLE_RATE = 16000
-DURATION = 5
+
+def _get_duration():
+    try:
+        from config.settings import Config
+        return getattr(Config, 'RECORDING_DURATION', 5)
+    except:
+        return 5
+
 
 def _similarity(a: str, b: str) -> float:
     """Calculate similarity between two strings"""
@@ -105,7 +112,8 @@ def listen(timeout: Optional[int] = None) -> str:
     
     try:
         # Record audio
-        audio = sd.rec(int(DURATION * SAMPLE_RATE), samplerate=SAMPLE_RATE, channels=1, dtype=np.float32)
+        duration = _get_duration()
+        audio = sd.rec(int(duration * SAMPLE_RATE), samplerate=SAMPLE_RATE, channels=1, dtype=np.float32)
         sd.wait()
         audio = audio.flatten()
         
@@ -140,33 +148,67 @@ def listen(timeout: Optional[int] = None) -> str:
         return ""
 
 # === TTS ===
+import queue
+
+_tts_available = False
+_tts_queue = queue.Queue()
+_tts_thread = None
+
 try:
     import pyttsx3
-    engine = pyttsx3.init()
     _tts_available = True
 except ImportError:
-    _tts_available = False
     print("TTS not available — pip install pyttsx3")
+
+def _tts_worker():
+    if not _tts_available:
+        return
+    try:
+        import pyttsx3
+        if os.name == "nt":
+            try:
+                import pythoncom
+                pythoncom.CoInitialize()
+            except Exception as e:
+                print(f"Warning: CoInitialize failed: {e}")
+        engine = pyttsx3.init()
+    except Exception as e:
+        print(f"Failed to initialize pyttsx3 engine: {e}")
+        return
+
+    while True:
+        item = _tts_queue.get()
+        if item is None:
+            _tts_queue.task_done()
+            break
+        try:
+            engine.say(item)
+            engine.runAndWait()
+        except Exception as e:
+            print(f"TTS Engine execution error: {e}")
+        _tts_queue.task_done()
+
+if _tts_available:
+    _tts_thread = threading.Thread(target=_tts_worker, daemon=True)
+    _tts_thread.start()
 
 def speak(text: str):
     if not _tts_available:
         print(f"Nexa: {text}")
         return
-    engine.say(text)
-    engine.runAndWait()
+    # Use thread-safe queue
+    _tts_queue.put(text)
+    _tts_queue.join()
 
 def speak_async(text: str):
-    """Async version of speak (runs in thread)"""
+    """Async version of speak (runs in background thread queue)"""
     if not _tts_available:
         print(f"Nexa: {text}")
         return
-    def _speak():
-        engine.say(text)
-        engine.runAndWait()
-    threading.Thread(target=_speak, daemon=True).start()
+    _tts_queue.put(text)
 
 # === Sound Effects ===
 def play_sound(file_path: str):
     if os.path.exists(file_path):
         cmd = f'start "" "{file_path}"' if os.name == "nt" else f"afplay '{file_path}'"
-        threading.Thread(target=os.system, args=(cmd,), daemon=True).start()
+        threading.Thread(target=os.system, args=(cmd,), daemon=True).start()
