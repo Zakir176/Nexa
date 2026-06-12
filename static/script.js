@@ -14,6 +14,7 @@ const NEXA = (function() {
     let voiceLevel = 0;
     let commandHistory = [];
     let connectionStatusEl;
+    let recordingDuration = 5000;
 
     // Public methods
     return {
@@ -69,6 +70,12 @@ const NEXA = (function() {
             try {
                 const data = JSON.parse(e.data);
                 
+                // Handle config settings
+                if (data.type === "config" && data.recording_duration) {
+                    recordingDuration = data.recording_duration * 1000;
+                    console.log("Config loaded. Recording duration:", recordingDuration);
+                }
+                
                 // Handle status updates
                 if (data.status && statusEl) {
                     statusEl.textContent = data.status;
@@ -87,6 +94,16 @@ const NEXA = (function() {
                 // Handle hologram mode
                 if (data.type === "hologram") {
                     handleHologram(data.active);
+                }
+                
+                // Handle screenshot
+                if (data.type === "screenshot" && data.path) {
+                    handleScreenshot(data.path);
+                }
+
+                // Handle suit up result
+                if (data.type === "suit_up_result" && data.image_url) {
+                    handleSuitUpResult(data.image_url);
                 }
                 
                 // Handle errors
@@ -251,12 +268,6 @@ const NEXA = (function() {
     // ================================
     function initEventListeners() {
         nexaButton.addEventListener('click', handleActivation);
-        document.addEventListener('click', (e) => {
-            if (e.target !== nexaButton && !nexaButton.contains(e.target)) {
-                handleActivation();
-            }
-        });
-
         document.addEventListener('visibilitychange', handleVisibilityChange);
 
         document.addEventListener('keydown', (e) => {
@@ -382,7 +393,7 @@ const NEXA = (function() {
                 statusEl.textContent = "Session Timeout";
                 setTimeout(() => statusEl.textContent = "System Ready", 1500);
             }
-        }, 8000);
+        }, recordingDuration + 3000);
     }
 
     function handleVisibilityChange() {
@@ -651,6 +662,180 @@ const NEXA = (function() {
                 document.body.style.overflow = '';
             }
         });
+    }
+
+    let screenshotOverlay = null;
+
+    function handleScreenshot(path) {
+        if (screenshotOverlay) screenshotOverlay.remove();
+        ensureAnimationsExist();
+        
+        screenshotOverlay = document.createElement('div');
+        screenshotOverlay.id = 'screenshot-overlay';
+        screenshotOverlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            backdrop-filter: blur(10px);
+            animation: fadeIn 0.3s ease-out;
+        `;
+        
+        const title = document.createElement('h2');
+        title.textContent = 'SCREENSHOT CAPTURED';
+        title.style.cssText = `
+            color: #00ffff;
+            font-family: 'Orbitron', monospace;
+            margin-bottom: 20px;
+            letter-spacing: 0.2rem;
+            text-shadow: 0 0 10px #00ffff;
+        `;
+        
+        const img = document.createElement('img');
+        img.src = `${path}?t=${Date.now()}`;
+        img.style.cssText = `
+            max-width: 85%;
+            max-height: 75%;
+            border: 2px solid #00ffff;
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.4);
+            border-radius: 8px;
+            margin-bottom: 20px;
+        `;
+        
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = 'Dismiss';
+        closeBtn.style.cssText = `
+            padding: 10px 25px;
+            background: rgba(0, 255, 255, 0.2);
+            color: #00ffff;
+            border: 1px solid #00ffff;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            font-family: 'Orbitron', monospace;
+            letter-spacing: 0.1rem;
+            transition: all 0.3s ease;
+        `;
+        closeBtn.onmouseover = () => {
+            closeBtn.style.background = '#00ffff';
+            closeBtn.style.color = '#000';
+        };
+        closeBtn.onmouseout = () => {
+            closeBtn.style.background = 'rgba(0, 255, 255, 0.2)';
+            closeBtn.style.color = '#00ffff';
+        };
+        closeBtn.onclick = () => {
+            screenshotOverlay.remove();
+            screenshotOverlay = null;
+        };
+        
+        screenshotOverlay.appendChild(title);
+        screenshotOverlay.appendChild(img);
+        screenshotOverlay.appendChild(closeBtn);
+        document.body.appendChild(screenshotOverlay);
+    }
+
+    let suitUpOverlay = null;
+
+    function handleSuitUpResult(imageUrl) {
+        if (suitUpOverlay) suitUpOverlay.remove();
+        ensureAnimationsExist();
+        
+        suitUpOverlay = document.createElement('div');
+        suitUpOverlay.id = 'suitup-overlay';
+        suitUpOverlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            backdrop-filter: blur(15px);
+            animation: fadeIn 0.5s ease-out;
+        `;
+        
+        const title = document.createElement('h2');
+        title.textContent = 'STARK HUD SYSTEM ONLINE';
+        title.style.cssText = `
+            color: #ff3333;
+            font-family: 'Orbitron', monospace;
+            margin-bottom: 25px;
+            letter-spacing: 0.3rem;
+            text-shadow: 0 0 15px #ff3333, 0 0 30px #ff3333;
+        `;
+        
+        const img = document.createElement('img');
+        img.src = imageUrl.startsWith('/') ? `${imageUrl}?t=${Date.now()}` : imageUrl;
+        img.style.cssText = `
+            max-width: 80%;
+            max-height: 70%;
+            border: 3px solid #ff3333;
+            box-shadow: 0 0 50px rgba(255, 51, 51, 0.5);
+            border-radius: 12px;
+            margin-bottom: 25px;
+        `;
+        
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = 'DEACTIVATE STARK-MODE';
+        closeBtn.style.cssText = `
+            padding: 12px 30px;
+            background: rgba(255, 51, 51, 0.2);
+            color: #ff3333;
+            border: 1px solid #ff3333;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+            font-family: 'Orbitron', monospace;
+            letter-spacing: 0.15rem;
+            transition: all 0.3s ease;
+        `;
+        closeBtn.onmouseover = () => {
+            closeBtn.style.background = '#ff3333';
+            closeBtn.style.color = '#fff';
+            closeBtn.style.boxShadow = '0 0 20px #ff3333';
+        };
+        closeBtn.onmouseout = () => {
+            closeBtn.style.background = 'rgba(255, 51, 51, 0.2)';
+            closeBtn.style.color = '#ff3333';
+            closeBtn.style.boxShadow = 'none';
+        };
+        closeBtn.onclick = () => {
+            suitUpOverlay.remove();
+            suitUpOverlay = null;
+        };
+        
+        suitUpOverlay.appendChild(title);
+        suitUpOverlay.appendChild(img);
+        suitUpOverlay.appendChild(closeBtn);
+        document.body.appendChild(suitUpOverlay);
+    }
+
+    function ensureAnimationsExist() {
+        if (!document.getElementById('nexa-animations')) {
+            const style = document.createElement('style');
+            style.id = 'nexa-animations';
+            style.textContent = `
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: scale(0.95); }
+                    to { opacity: 1; transform: scale(1); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
     }
 
     function cleanup() {
