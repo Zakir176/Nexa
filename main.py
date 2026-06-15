@@ -5,7 +5,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from core.voice import listen, speak
-from commands import app_control, scan, nexamode, hologram
+from commands import app_control, scan, nexamode, hologram, suit_up
 import asyncio
 import json
 import threading
@@ -39,6 +39,12 @@ async def health():
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     try:
+        from config.settings import Config
+        await websocket.send_json({
+            "type": "config",
+            "recording_duration": getattr(Config, "RECORDING_DURATION", 5)
+        })
+
         while True:
             data = await websocket.receive_text()
             if data == "stop_scan":
@@ -64,10 +70,14 @@ async def websocket_endpoint(websocket: WebSocket):
                                 if "hologram" in cmd.lower():
                                     await websocket.send_json({"type": "hologram", "active": True})
                                 # Set websocket and event loop for scan command
+                                # Set websocket and event loop for scan command
                                 if "scan" in cmd.lower():
                                     scan.set_websocket(websocket, loop)
-                                # Run blocking route_command in executor with websocket context
-                                result = await loop.run_in_executor(None, route_command, cmd, websocket)
+                                # Set websocket and event loop for suit up command
+                                if "suit" in cmd.lower():
+                                    suit_up.set_websocket(websocket, loop)
+                                # Run blocking route_command in executor with websocket context and loop
+                                result = await loop.run_in_executor(None, route_command, cmd, websocket, loop)
                                 await asyncio.sleep(1)
                                 await websocket.send_json({"status": f"DONE: {result or 'Complete'}"})
                                 # Deactivate hologram after command completes
@@ -97,10 +107,10 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         print("WebSocket disconnected")
 
-def route_command(cmd: str, websocket=None):
+def route_command(cmd: str, websocket=None, loop=None):
     cmd = cmd.lower()
-    if "open" in cmd or "close" in cmd or "volume" in cmd:
-        return app_control.handle(cmd)
+    if "open" in cmd or "close" in cmd or "volume" in cmd or "screenshot" in cmd or "screen shot" in cmd:
+        return app_control.handle(cmd, websocket, loop)
     if "scan" in cmd:
         # Websocket is set in the async context above
         return scan.handle()
@@ -108,6 +118,8 @@ def route_command(cmd: str, websocket=None):
         # Hologram activation message is sent in the async context above
         # We'll send it from the async function instead
         return hologram.handle()
+    if "suit" in cmd:
+        return suit_up.handle()
     return nexamode.handle(cmd)
 
 if __name__ == "__main__":
