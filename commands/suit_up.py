@@ -1,23 +1,70 @@
 # commands/suit_up.py
 import cv2
+import os
+import asyncio
 from core.ai import generate_iron_man_face
-from core.voice import speak_async
+from core.voice import speak, play_sound
+from config.settings import Config
 
+_websocket = None
+_event_loop = None
+
+def set_websocket(ws, loop=None):
+    global _websocket, _event_loop
+    _websocket = ws
+    _event_loop = loop
 
 def handle():
-    speak_async("assets/suitup.mp3")
-    cap = cv2.VideoCapture(0)
+    play_sound("assets/activate.wav")
+    speak("Suiting up. Accessing camera system.")
+    
+    if _websocket and _event_loop:
+        asyncio.run_coroutine_threadsafe(
+            _websocket.send_json({"status": "CAMERA ACTIVE. CAPTURING..."}),
+            _event_loop
+        )
+        
+    cap = cv2.VideoCapture(Config.CAMERA_ID)
     ret, frame = cap.read()
     cap.release()
-    if ret:
-        cv2.imwrite("temp_selfie.jpg", frame)
-        result = generate_iron_man_face("temp_selfie.jpg")
+    
+    if not ret:
+        speak("Camera failed to initialize.")
+        if _websocket and _event_loop:
+            asyncio.run_coroutine_threadsafe(
+                _websocket.send_json({"status": "CAMERA ERROR", "type": "error"}),
+                _event_loop
+            )
+        return "Camera error"
+        
+    # Save captured frame
+    temp_path = "temp_selfie.jpg"
+    cv2.imwrite(temp_path, frame)
+    
+    if _websocket and _event_loop:
+        asyncio.run_coroutine_threadsafe(
+            _websocket.send_json({"status": "GENERATING HUD OVERLAY..."}),
+            _event_loop
+        )
+        
+    speak("Stark systems active. Calibrating HUD.")
+    result = generate_iron_man_face(temp_path)
+    
+    # Clean up temp file
+    if os.path.exists(temp_path):
         try:
-            import streamlit as st
-
-            st.image(result, caption="Suit Up Complete")
-        except Exception:
-            # In non-UI mode, save the result to disk so user can inspect it
-            cv2.imwrite("suitup_result.jpg", result)
-        return "Iron Man mode activated"
-    return "Camera error"
+            os.remove(temp_path)
+        except:
+            pass
+            
+    if _websocket and _event_loop:
+        asyncio.run_coroutine_threadsafe(
+            _websocket.send_json({
+                "type": "suit_up_result",
+                "image_url": result
+            }),
+            _event_loop
+        )
+        
+    speak("Suit up complete. Systems online.")
+    return "Iron Man mode activated"
