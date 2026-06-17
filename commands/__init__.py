@@ -15,11 +15,12 @@ app_control = _safe_import_module("app_control")
 scan = _safe_import_module("scan")
 nexamode = _safe_import_module("nexamode")
 hologram = _safe_import_module("hologram")
+suit_up = _safe_import_module("suit_up")
 
 # Fallback if missing
 if not app_control:
     class _FallbackAppControl:
-        def handle(self, cmd): return "App control not found—create commands/app_control.py"
+        def handle(self, cmd, websocket=None, loop=None): return "App control not found—create commands/app_control.py"
     app_control = _FallbackAppControl()
     
 if not scan:
@@ -38,3 +39,9 @@ if not hologram:
     class _FallbackHologram:
         def handle(self): return "Hologram not found—create commands/hologram.py"
     hologram = _FallbackHologram()
+
+if not suit_up:
+    class _FallbackSuitUp:
+        def handle(self): return "Suit up not found—create commands/suit_up.py"
+        def set_websocket(self, ws, loop): pass
+    suit_up = _FallbackSuitUp()
